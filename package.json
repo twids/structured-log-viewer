@@ -3,8 +3,12 @@
   "displayName": "Structured Log Viewer",
   "description": "View structured JSON log files in a filterable, sortable table. Ships with Serilog Compact (CLEF) and Serilog JSON templates — extensible with custom format templates.",
   "version": "0.1.0",
-  "publisher": "your-publisher",
+  "publisher": "twids",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/twids/structured-log-viewer"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },

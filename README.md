@@ -15,6 +15,29 @@ A VS Code extension for viewing structured JSON log files in a filterable, searc
 - **Keyboard navigation** — Navigate rows with arrow keys, expand/collapse with Enter/Escape
 - **Custom templates** — Define your own field mappings for any JSON log format
 
+## Installation
+
+### From the VS Code Marketplace
+
+Search for **"Structured Log Viewer"** in the Extensions view (`Ctrl+Shift+X`) and click **Install**.
+
+### From VSIX (local install)
+
+1. Download the latest `.vsix` from the [Releases](https://github.com/twids/structured-log-viewer/releases) page
+2. In VS Code: `Ctrl+Shift+P` → **"Extensions: Install from VSIX..."** → select the file
+3. Reload VS Code
+
+### From Source
+
+```bash
+git clone https://github.com/twids/structured-log-viewer.git
+cd structured-log-viewer
+npm install
+npm run build
+npx @vscode/vsce package
+code --install-extension structured-log-viewer-*.vsix
+```
+
 ## Usage
 
 1. Open a `.clef`, `.log`, or `.txt` file in VS Code
