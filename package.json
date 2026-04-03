@@ -1,0 +1,111 @@
+{
+  "name": "structured-log-viewer",
+  "displayName": "Structured Log Viewer",
+  "description": "View structured JSON log files in a filterable, sortable table. Ships with Serilog Compact (CLEF) and Serilog JSON templates — extensible with custom format templates.",
+  "version": "0.1.0",
+  "publisher": "your-publisher",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Formatters"
+  ],
+  "keywords": [
+    "log",
+    "log viewer",
+    "serilog",
+    "clef",
+    "structured logging",
+    "json logs"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "structuredLogViewer.logTable",
+        "displayName": "Structured Log Viewer",
+        "selector": [
+          { "filenamePattern": "*.clef" },
+          { "filenamePattern": "*.log" },
+          { "filenamePattern": "*.txt" }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "structuredLogViewer.openAsLogTable",
+        "title": "Open with Structured Log Viewer"
+      }
+    ],
+    "configuration": {
+      "title": "Structured Log Viewer",
+      "properties": {
+        "structuredLogViewer.customTemplates": {
+          "type": "array",
+          "default": [],
+          "description": "Custom log format templates. Each template maps JSON fields to standard log columns.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name of the template"
+              },
+              "detect": {
+                "type": "array",
+                "description": "List of JSON field names that must be present for auto-detection",
+                "items": { "type": "string" }
+              },
+              "mappings": {
+                "type": "object",
+                "description": "Maps semantic columns to JSON field paths",
+                "properties": {
+                  "timestamp": { "type": "string" },
+                  "level": { "type": "string" },
+                  "message": { "type": "string" },
+                  "messageTemplate": { "type": "string" },
+                  "exception": { "type": "string" },
+                  "eventId": { "type": "string" },
+                  "properties": { "type": "string" }
+                }
+              },
+              "levelMap": {
+                "type": "object",
+                "description": "Optional mapping from values in the log to normalized level names (Verbose, Debug, Information, Warning, Error, Fatal)"
+              },
+              "defaultLevel": {
+                "type": "string",
+                "description": "Level to assume when the level field is absent",
+                "default": "Information"
+              }
+            },
+            "required": ["name", "mappings"]
+          }
+        },
+        "structuredLogViewer.defaultPageSize": {
+          "type": "number",
+          "default": 5000,
+          "description": "Number of log entries to load per page"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.mjs --production",
+    "watch": "node esbuild.mjs --watch",
+    "test": "vitest run",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0",
+    "vitest": "^3.0.0"
+  }
+}
