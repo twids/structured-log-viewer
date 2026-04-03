@@ -15,10 +15,12 @@ export class VirtualTable {
   private expansionPanelHeight = 200;
   private expandedRows: Set<number> = new Set();
   private overscan = 5;
+  private selectedIndex = -1;
 
   private rafId: number | null = null;
   private onScrollBound: () => void;
   private onClickBound: (e: MouseEvent) => void;
+  private onKeyDownBound: (e: KeyboardEvent) => void;
 
   constructor(container: HTMLElement, columns?: ColumnDef[]) {
     this.container = container;
@@ -35,6 +37,9 @@ export class VirtualTable {
 
     container.appendChild(this.headerRow);
     container.appendChild(this.rowContainer);
+
+    // Make viewport focusable for keyboard navigation
+    container.setAttribute('tabindex', '0');
 
     // Set CSS variable for column widths (inherited by all .log-row children)
     container.style.setProperty(
@@ -55,16 +60,48 @@ export class VirtualTable {
     this.onClickBound = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const row = target.closest('.log-row') as HTMLElement | null;
-      if (row?.classList.contains('expandable')) {
+      if (row) {
         const index = parseInt(row.dataset.index ?? '', 10);
         if (!isNaN(index)) {
-          this.toggleExpand(index);
+          this.selectRow(index);
+          if (row.classList.contains('expandable')) {
+            this.toggleExpand(index);
+          }
         }
+      }
+    };
+
+    this.onKeyDownBound = (e: KeyboardEvent) => {
+      if (this.entries.length === 0) return;
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          this.selectRow(Math.min(this.selectedIndex + 1, this.entries.length - 1));
+          this.scrollToSelected();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          this.selectRow(Math.max(this.selectedIndex - 1, 0));
+          this.scrollToSelected();
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (this.selectedIndex >= 0) {
+            this.toggleExpand(this.selectedIndex);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          if (this.selectedIndex >= 0 && this.expandedRows.has(this.selectedIndex)) {
+            this.toggleExpand(this.selectedIndex);
+          }
+          break;
       }
     };
 
     this.viewport.addEventListener('scroll', this.onScrollBound);
     this.viewport.addEventListener('click', this.onClickBound);
+    this.viewport.addEventListener('keydown', this.onKeyDownBound);
 
     this.render();
   }
@@ -72,8 +109,33 @@ export class VirtualTable {
   setData(entries: LogEntry[]): void {
     this.entries = entries;
     this.expandedRows.clear();
+    this.selectedIndex = -1;
     this.updateSpacer();
     this.render();
+  }
+
+  getSelectedIndex(): number {
+    return this.selectedIndex;
+  }
+
+  selectRow(index: number): void {
+    if (index < -1 || index >= this.entries.length) return;
+    this.selectedIndex = index;
+    this.render();
+  }
+
+  private scrollToSelected(): void {
+    if (this.selectedIndex < 0) return;
+    const rowTop = this.getRowTop(this.selectedIndex);
+    const rowBottom = rowTop + this.rowHeight;
+    const viewTop = this.viewport.scrollTop;
+    const viewBottom = viewTop + this.viewport.clientHeight;
+
+    if (rowTop < viewTop) {
+      this.viewport.scrollTop = rowTop;
+    } else if (rowBottom > viewBottom) {
+      this.viewport.scrollTop = rowBottom - this.viewport.clientHeight;
+    }
   }
 
   toggleExpand(index: number): void {
@@ -93,6 +155,7 @@ export class VirtualTable {
   destroy(): void {
     this.viewport.removeEventListener('scroll', this.onScrollBound);
     this.viewport.removeEventListener('click', this.onClickBound);
+    this.viewport.removeEventListener('keydown', this.onKeyDownBound);
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
@@ -211,6 +274,9 @@ export class VirtualTable {
     }
     if (this.expandedRows.has(index)) {
       row.classList.add('expanded');
+    }
+    if (index === this.selectedIndex) {
+      row.classList.add('selected');
     }
 
     const top = this.getRowTop(index);
