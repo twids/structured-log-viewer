@@ -28,9 +28,15 @@
         "viewType": "structuredLogViewer.logTable",
         "displayName": "Structured Log Viewer",
         "selector": [
-          { "filenamePattern": "*.clef" },
-          { "filenamePattern": "*.log" },
-          { "filenamePattern": "*.txt" }
+          {
+            "filenamePattern": "*.clef"
+          },
+          {
+            "filenamePattern": "*.log"
+          },
+          {
+            "filenamePattern": "*.txt"
+          }
         ],
         "priority": "option"
       }
@@ -58,19 +64,35 @@
               "detect": {
                 "type": "array",
                 "description": "List of JSON field names that must be present for auto-detection",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               },
               "mappings": {
                 "type": "object",
                 "description": "Maps semantic columns to JSON field paths",
                 "properties": {
-                  "timestamp": { "type": "string" },
-                  "level": { "type": "string" },
-                  "message": { "type": "string" },
-                  "messageTemplate": { "type": "string" },
-                  "exception": { "type": "string" },
-                  "eventId": { "type": "string" },
-                  "properties": { "type": "string" }
+                  "timestamp": {
+                    "type": "string"
+                  },
+                  "level": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "messageTemplate": {
+                    "type": "string"
+                  },
+                  "exception": {
+                    "type": "string"
+                  },
+                  "eventId": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "type": "string"
+                  }
                 }
               },
               "levelMap": {
@@ -83,7 +105,10 @@
                 "default": "Information"
               }
             },
-            "required": ["name", "mappings"]
+            "required": [
+              "name",
+              "mappings"
+            ]
           }
         },
         "structuredLogViewer.defaultPageSize": {
@@ -102,9 +127,10 @@
     "lint": "eslint src"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
     "esbuild": "^0.20.0",
+    "happy-dom": "^20.8.9",
     "typescript": "^5.3.0",
     "vitest": "^3.0.0"
   }

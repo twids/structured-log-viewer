@@ -158,3 +158,141 @@ body {
 ::-webkit-scrollbar-thumb:active {
   background: var(--vscode-scrollbarSlider-activeBackground);
 }
+
+/* ── Phase 4: Virtual table ──────────────────────────────────────── */
+
+/* CSS variable for column widths — set dynamically by VirtualTable */
+#table-container {
+  --log-columns: 50px 100px 80px 1fr 200px;
+}
+
+.log-table-header {
+  display: grid;
+  grid-template-columns: var(--log-columns);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--vscode-editorGroupHeader-tabsBackground, var(--vscode-editor-background));
+  border-bottom: 2px solid var(--vscode-panel-border, var(--vscode-editorGroup-border));
+  min-width: 0;
+}
+
+.log-header-cell {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  color: var(--vscode-foreground);
+  opacity: 0.8;
+}
+
+.log-table-body {
+  position: relative;
+  width: 100%;
+  min-height: 1px; /* Ensure it takes up space even when empty */
+}
+
+/* Override base .log-row to use absolute grid layout */
+.log-row {
+  display: grid;
+  grid-template-columns: var(--log-columns);
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 28px;
+  min-width: 0;
+  border-bottom: 1px solid var(--vscode-panel-border, transparent);
+  align-items: center;
+}
+
+.log-row:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.log-row.selected {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.log-row.expandable {
+  cursor: pointer;
+}
+
+.log-row.expanded {
+  background: var(--vscode-list-inactiveSelectionBackground, rgba(255, 255, 255, 0.05));
+}
+
+/* Override base .log-cell for grid layout */
+.log-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;
+  min-width: 0;
+}
+
+/* Column-specific alignment */
+.col-line {
+  color: var(--vscode-editorLineNumber-foreground, #888);
+  font-size: 0.85em;
+  text-align: right;
+  padding-right: 12px;
+}
+
+.col-timestamp {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.9em;
+}
+
+/* Level badge */
+.level-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+/* Props preview */
+.props-preview {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+/* Expansion panel */
+.expansion-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 8px 12px;
+  background: var(--vscode-textBlockQuote-background, rgba(0, 0, 0, 0.15));
+  border-bottom: 1px solid var(--vscode-panel-border, var(--vscode-editorGroup-border));
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+  overflow: auto;
+  max-height: 200px;
+  box-sizing: border-box;
+}
+
+.exception-text {
+  color: var(--vscode-editorError-foreground, #f44747);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0 0 8px 0;
+}
+
+.exception-text:last-child {
+  margin-bottom: 0;
+}
+
+.properties-detail {
+  color: var(--vscode-editor-foreground);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+

@@ -1,11 +1,27 @@
 import './styles.css';
-import { ViewerState, ViewerStateData } from './state';
+import { ViewerState } from './state';
+import { VirtualTable } from './table';
 
 declare function acquireVsCodeApi(): { postMessage(msg: unknown): void };
 
 const vscode = acquireVsCodeApi();
 
 const state = new ViewerState();
+
+let table: VirtualTable | null = null;
+
+function initTable(): void {
+  const container = document.getElementById('table-container');
+  if (!container) return;
+  table = new VirtualTable(container);
+}
+
+window.addEventListener('DOMContentLoaded', initTable);
+
+// If DOM is already ready (webview loads synchronously)
+if (document.readyState !== 'loading') {
+  initTable();
+}
 
 window.addEventListener('message', (event: MessageEvent) => {
   const message = event.data;
@@ -16,7 +32,7 @@ window.addEventListener('message', (event: MessageEvent) => {
     case 'templateList':
       state.setTemplates(
         message.templates.map((t: { name: string }) => t.name),
-        message.activeTemplate
+        message.activeTemplate,
       );
       break;
     case 'appendData':
@@ -26,13 +42,16 @@ window.addEventListener('message', (event: MessageEvent) => {
 });
 
 state.onChange((data) => {
-  renderPlaceholder(data);
+  if (table) {
+    table.setData(data.entries);
+  }
+  updateStatusBar(data.entries.length, data.totalCount, data.activeTemplateName);
 });
 
 vscode.postMessage({ type: 'requestPage', page: 0 });
 
-function renderPlaceholder(data: ViewerStateData): void {
-  const container = document.getElementById('table-container');
-  if (!container) return;
-  container.textContent = `Loaded ${data.entries.length} of ${data.totalCount} entries (${data.activeTemplateName} format)`;
+function updateStatusBar(loaded: number, total: number, templateName: string): void {
+  const bar = document.getElementById('status-bar');
+  if (!bar) return;
+  bar.textContent = `${loaded} of ${total} entries${templateName ? ` · ${templateName}` : ''}`;
 }
