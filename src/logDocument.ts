@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { LogEntry, LogTemplate } from './templates/types';
 import { detectTemplate } from './templates/registry';
-import { parseLogLines } from './parser';
+import { parseLogLine, parseLogLines } from './parser';
 
 const GENERIC_JSON_TEMPLATE: LogTemplate = {
   name: 'Generic JSON',
@@ -17,6 +17,7 @@ export class LogDocument implements vscode.CustomDocument {
   entries: LogEntry[];
   template: LogTemplate;
   rawText: string;
+  byteLength: number;
 
   private constructor(
     uri: vscode.Uri,
@@ -28,6 +29,7 @@ export class LogDocument implements vscode.CustomDocument {
     this.rawText = rawText;
     this.template = template;
     this.entries = entries;
+    this.byteLength = new TextEncoder().encode(rawText).byteLength;
   }
 
   static async create(
@@ -64,6 +66,34 @@ export class LogDocument implements vscode.CustomDocument {
   reparse(template: LogTemplate): void {
     this.template = template;
     this.entries = this.rawText.trim() === '' ? [] : parseLogLines(this.rawText, template);
+  }
+
+  getTotalPages(pageSize: number): number {
+    if (this.entries.length === 0) {
+      return 0;
+    }
+    return Math.ceil(this.entries.length / pageSize);
+  }
+
+  appendText(newText: string): LogEntry[] {
+    if (newText.trim() === '') {
+      return [];
+    }
+    const startLine = this.entries.length > 0
+      ? this.entries[this.entries.length - 1].line + 1
+      : 0;
+    const lines = newText.split('\n');
+    const newEntries: LogEntry[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === '') {
+        continue;
+      }
+      newEntries.push(parseLogLine(lines[i], startLine + i, this.template));
+    }
+    this.entries.push(...newEntries);
+    this.rawText += (this.rawText.endsWith('\n') || this.rawText === '' ? '' : '\n') + newText;
+    this.byteLength = new TextEncoder().encode(this.rawText).byteLength;
+    return newEntries;
   }
 
   dispose(): void {

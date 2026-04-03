@@ -7,6 +7,7 @@ export interface LoadDataMessage {
   totalCount: number;
   page: number;
   pageSize: number;
+  hasMore: boolean;
 }
 
 export interface TemplateListMessage {

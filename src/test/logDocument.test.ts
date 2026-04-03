@@ -145,4 +145,74 @@ describe('LogDocument', () => {
       expect(doc.entries).toHaveLength(0);
     });
   });
+
+  describe('appendText', () => {
+    it('parses new lines with current template', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      const originalCount = doc.entries.length;
+      const newLine = '{"@t":"2024-01-15T10:00:05.000Z","@l":"Information","@m":"New entry","@mt":"New entry"}';
+      const newEntries = doc.appendText(newLine);
+      expect(doc.entries).toHaveLength(originalCount + 1);
+      expect(newEntries).toHaveLength(1);
+      expect(newEntries[0].message).toBe('New entry');
+    });
+
+    it('returns only the new entries', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      const newLines = [
+        '{"@t":"2024-01-15T10:00:05.000Z","@l":"Information","@m":"Entry A","@mt":"Entry A"}',
+        '{"@t":"2024-01-15T10:00:06.000Z","@l":"Warning","@m":"Entry B","@mt":"Entry B"}',
+      ].join('\n');
+      const newEntries = doc.appendText(newLines);
+      expect(newEntries).toHaveLength(2);
+      expect(newEntries[0].message).toBe('Entry A');
+      expect(newEntries[1].message).toBe('Entry B');
+    });
+
+    it('updates rawText with appended text', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      const newLine = '{"@t":"2024-01-15T10:00:05.000Z","@l":"Information","@m":"Appended","@mt":"Appended"}';
+      doc.appendText(newLine);
+      expect(doc.rawText).toContain('Appended');
+    });
+
+    it('handles empty append text', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      const originalCount = doc.entries.length;
+      const newEntries = doc.appendText('');
+      expect(newEntries).toHaveLength(0);
+      expect(doc.entries).toHaveLength(originalCount);
+    });
+  });
+
+  describe('getTotalPages', () => {
+    it('calculates correctly with exact division', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      // 5 entries, pageSize 5 → 1 page
+      expect(doc.getTotalPages(5)).toBe(1);
+    });
+
+    it('calculates correctly with remainder', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      // 5 entries, pageSize 2 → 3 pages
+      expect(doc.getTotalPages(2)).toBe(3);
+    });
+
+    it('returns 0 for empty entries', () => {
+      const doc = LogDocument.fromText('empty.log', '');
+      expect(doc.getTotalPages(10)).toBe(0);
+    });
+
+    it('returns 1 when entries fit in one page', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      expect(doc.getTotalPages(5000)).toBe(1);
+    });
+  });
+
+  describe('byteLength', () => {
+    it('stores the byte length of the raw text', () => {
+      const doc = LogDocument.fromText('test.clef', CLEF_LINES);
+      expect(doc.byteLength).toBe(new TextEncoder().encode(CLEF_LINES).byteLength);
+    });
+  });
 });

@@ -32,13 +32,38 @@ body {
 #status-bar {
   display: flex;
   align-items: center;
-  padding: 2px 8px;
-  font-size: 0.85em;
-  color: var(--vscode-statusBar-foreground, var(--vscode-editor-foreground));
-  background: var(--vscode-statusBar-background, var(--vscode-editorGroupHeader-tabsBackground));
+  gap: 12px;
+  padding: 4px 12px;
   border-top: 1px solid var(--vscode-panel-border, var(--vscode-editorGroup-border));
+  background: var(--vscode-statusBar-background, var(--vscode-editor-background));
+  color: var(--vscode-statusBar-foreground, var(--vscode-editor-foreground));
+  font-size: 0.85em;
   flex-shrink: 0;
-  opacity: 0.8;
+}
+
+.status-live {
+  color: var(--vscode-testing-iconPassed, #73c991);
+}
+
+.status-loading {
+  opacity: 0.7;
+}
+
+.load-more-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  background: var(--vscode-button-secondaryBackground, var(--vscode-editor-background));
+  color: var(--vscode-button-secondaryForeground, var(--vscode-editor-foreground));
+  border: 1px solid var(--vscode-panel-border, transparent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.load-more-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
 }
 
 #raw-view {

@@ -7,6 +7,10 @@ export interface ViewerStateData {
   totalCount: number;
   currentPage: number;
   pageSize: number;
+  hasMore: boolean;
+  loadedPages: Set<number>;
+  isLoading: boolean;
+  isLive: boolean;
   activeTemplateName: string;
   templateNames: string[];
   viewMode: ViewMode;
@@ -24,6 +28,10 @@ export class ViewerState {
       totalCount: 0,
       currentPage: 0,
       pageSize: 100,
+      hasMore: false,
+      loadedPages: new Set(),
+      isLoading: false,
+      isLive: false,
       activeTemplateName: '',
       templateNames: [],
       viewMode: 'table',
@@ -36,13 +44,29 @@ export class ViewerState {
     return this.data;
   }
 
-  setEntries(entries: LogEntry[], totalCount: number, page: number, pageSize: number): void {
-    this.data = { ...this.data, entries, totalCount, currentPage: page, pageSize };
+  setEntries(entries: LogEntry[], totalCount: number, page: number, pageSize: number, hasMore?: boolean): void {
+    const loadedPages = page === 0 ? new Set([0]) : new Set([...this.data.loadedPages, page]);
+    const newEntries = page === 0 ? entries : [...this.data.entries, ...entries];
+    this.data = {
+      ...this.data,
+      entries: newEntries,
+      totalCount,
+      currentPage: page,
+      pageSize,
+      hasMore: hasMore ?? false,
+      loadedPages,
+      isLoading: false,
+    };
     this.notify();
   }
 
   appendEntries(entries: LogEntry[], totalCount: number): void {
-    this.data = { ...this.data, entries: [...this.data.entries, ...entries], totalCount };
+    this.data = { ...this.data, entries: [...this.data.entries, ...entries], totalCount, isLive: true };
+    this.notify();
+  }
+
+  setLoading(isLoading: boolean): void {
+    this.data = { ...this.data, isLoading };
     this.notify();
   }
 

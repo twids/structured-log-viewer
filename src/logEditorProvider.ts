@@ -52,6 +52,7 @@ export class LogEditorProvider
       totalCount: document.entries.length,
       page: 0,
       pageSize,
+      hasMore: document.getTotalPages(pageSize) > 1,
     });
 
     webviewPanel.webview.onDidReceiveMessage(
@@ -64,6 +65,7 @@ export class LogEditorProvider
               totalCount: document.entries.length,
               page: msg.page,
               pageSize,
+              hasMore: (msg.page + 1) < document.getTotalPages(pageSize),
             });
             break;
 
@@ -80,6 +82,7 @@ export class LogEditorProvider
                 totalCount: document.entries.length,
                 page: 0,
                 pageSize,
+                hasMore: document.getTotalPages(pageSize) > 1,
               });
             }
             break;
@@ -91,6 +94,44 @@ export class LogEditorProvider
         }
       }
     );
+
+    // File system watcher for live-tail
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(document.uri, '*')
+    );
+    let watcherReady = false;
+    // Avoid triggering on the initial load
+    setTimeout(() => { watcherReady = true; }, 500);
+
+    const onFileChange = async () => {
+      if (!watcherReady) {
+        return;
+      }
+      try {
+        const data = await vscode.workspace.fs.readFile(document.uri);
+        const fullText = new TextDecoder('utf-8').decode(data);
+        if (fullText.length <= document.rawText.length) {
+          return;
+        }
+        const newContent = fullText.slice(document.rawText.length);
+        const newEntries = document.appendText(newContent);
+        if (newEntries.length > 0) {
+          this.postMessage(webviewPanel.webview, {
+            type: 'appendData',
+            entries: newEntries,
+            totalCount: document.entries.length,
+          });
+        }
+      } catch {
+        // File may have been deleted or become inaccessible
+      }
+    };
+
+    watcher.onDidChange(onFileChange);
+
+    webviewPanel.onDidDispose(() => {
+      watcher.dispose();
+    });
   }
 
   private postMessage(

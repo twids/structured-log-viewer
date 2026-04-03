@@ -4,6 +4,7 @@ import { VirtualTable } from './table';
 import { Toolbar } from './toolbar';
 import { RawView } from './rawView';
 import { FilterEngine } from './filters';
+import { StatusBar } from './statusbar';
 
 declare function acquireVsCodeApi(): { postMessage(msg: unknown): void };
 
@@ -14,6 +15,8 @@ const state = new ViewerState();
 let table: VirtualTable | null = null;
 let toolbar: Toolbar | null = null;
 let rawView: RawView | null = null;
+let statusBar: StatusBar | null = null;
+let loadMoreBtn: HTMLButtonElement | null = null;
 
 function init(): void {
   const tableContainer = document.getElementById('table-container');
@@ -44,6 +47,30 @@ function init(): void {
   if (rawViewContainer) {
     rawView = new RawView(rawViewContainer);
   }
+
+  const statusBarContainer = document.getElementById('status-bar');
+  if (statusBarContainer) {
+    statusBar = new StatusBar(statusBarContainer);
+  }
+
+  // Load More button inside the table container
+  if (tableContainer) {
+    loadMoreBtn = document.createElement('button');
+    loadMoreBtn.className = 'load-more-btn';
+    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.style.display = 'none';
+    loadMoreBtn.addEventListener('click', () => {
+      const data = state.get();
+      if (data.hasMore && !data.isLoading) {
+        const nextPage = data.currentPage + 1;
+        if (!data.loadedPages.has(nextPage)) {
+          state.setLoading(true);
+          vscode.postMessage({ type: 'requestPage', page: nextPage });
+        }
+      }
+    });
+    tableContainer.appendChild(loadMoreBtn);
+  }
 }
 
 window.addEventListener('DOMContentLoaded', init);
@@ -56,7 +83,7 @@ window.addEventListener('message', (event: MessageEvent) => {
   const message = event.data;
   switch (message.type) {
     case 'loadData':
-      state.setEntries(message.entries, message.totalCount, message.page, message.pageSize);
+      state.setEntries(message.entries, message.totalCount, message.page, message.pageSize, message.hasMore);
       break;
     case 'templateList': {
       const names = message.templates.map((t: { name: string }) => t.name);
@@ -87,13 +114,23 @@ state.onChange((data) => {
   }
 
   toolbar?.setActiveLevels(data.activeLevels);
-  updateStatusBar(filtered.length, data.totalCount, data.activeTemplateName);
+
+  // Update load-more button
+  if (loadMoreBtn) {
+    loadMoreBtn.style.display = data.hasMore ? '' : 'none';
+    loadMoreBtn.textContent = data.isLoading ? 'Loading...' : 'Load More';
+    loadMoreBtn.disabled = data.isLoading;
+  }
+
+  // Update status bar
+  statusBar?.update({
+    shownCount: filtered.length,
+    totalCount: data.totalCount,
+    loadedCount: data.entries.length,
+    templateName: data.activeTemplateName,
+    isLive: data.isLive,
+    isLoading: data.isLoading,
+  });
 });
 
 vscode.postMessage({ type: 'requestPage', page: 0 });
-
-function updateStatusBar(shown: number, total: number, templateName: string): void {
-  const bar = document.getElementById('status-bar');
-  if (!bar) return;
-  bar.textContent = `${shown} of ${total} entries${templateName ? ` · ${templateName}` : ''}`;
-}
