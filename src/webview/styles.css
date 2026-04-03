@@ -52,6 +52,99 @@ body {
   word-break: break-all;
 }
 
+#raw-view.visible {
+  display: block;
+}
+
+/* ── Phase 5: Toolbar ────────────────────────────────────────────── */
+
+.level-btn-group {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.level-btn {
+  border: 1px solid var(--vscode-button-border, transparent);
+  background: transparent;
+  color: var(--level-color, var(--vscode-foreground));
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.82em;
+  font-family: inherit;
+  opacity: 0.45;
+  transition: opacity 0.1s ease;
+  white-space: nowrap;
+}
+
+.level-btn:hover {
+  opacity: 0.75;
+}
+
+.level-btn.active {
+  opacity: 1;
+  background: color-mix(in srgb, var(--level-color, #888) 15%, transparent);
+  border-color: var(--level-color, var(--vscode-button-border, transparent));
+}
+
+.level-btn-verbose.active  { color: #888888; }
+.level-btn-debug.active    { color: #00bcd4; }
+.level-btn-information.active { color: #3794ff; }
+.level-btn-warning.active  { color: #fc0; }
+.level-btn-error.active    { color: #f44747; }
+.level-btn-fatal.active    { color: #ff6b6b; background: rgba(244, 71, 71, 0.2); }
+
+.search-input {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.9em;
+  flex: 1;
+  max-width: 300px;
+  min-width: 120px;
+}
+
+.search-input:focus {
+  border-color: var(--vscode-focusBorder);
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--vscode-input-placeholderForeground, #888);
+}
+
+.template-select {
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground);
+  border: 1px solid var(--vscode-dropdown-border, transparent);
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.view-toggle {
+  background: transparent;
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  border: 1px solid var(--vscode-button-border, transparent);
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9em;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.view-toggle:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
+}
+
 /* Log level colors */
 .level-verbose {
   color: #888;
