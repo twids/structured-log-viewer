@@ -24,7 +24,11 @@ function init(): void {
   const rawViewContainer = document.getElementById('raw-view');
 
   if (tableContainer) {
-    table = new VirtualTable(tableContainer);
+    table = new VirtualTable(tableContainer, undefined, {
+      onPropertyFilterAdd: (filter) => {
+        state.addPropertyFilter(filter);
+      },
+    });
   }
 
   if (toolbarContainer) {
@@ -40,6 +44,15 @@ function init(): void {
       },
       onViewModeChange: (mode) => {
         state.setViewMode(mode);
+      },
+      onPropertyFilterModeChange: (mode) => {
+        state.setPropertyFilterMode(mode);
+      },
+      onRemovePropertyFilter: (index) => {
+        state.removePropertyFilter(index);
+      },
+      onClearPropertyFilters: () => {
+        state.clearPropertyFilters();
       },
     });
   }
@@ -98,7 +111,13 @@ window.addEventListener('message', (event: MessageEvent) => {
 });
 
 state.onChange((data) => {
-  const filtered = FilterEngine.apply(data.entries, data.activeLevels, data.searchText);
+  const filtered = FilterEngine.apply(
+    data.entries,
+    data.activeLevels,
+    data.searchText,
+    data.propertyFilters,
+    data.propertyFilterMode,
+  );
 
   if (data.viewMode === 'table') {
     const tableContainer = document.getElementById('table-container');
@@ -114,6 +133,7 @@ state.onChange((data) => {
   }
 
   toolbar?.setActiveLevels(data.activeLevels);
+  toolbar?.setPropertyFilters(data.propertyFilters, data.propertyFilterMode);
 
   // Update load-more button
   if (loadMoreBtn) {

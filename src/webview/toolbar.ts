@@ -1,8 +1,13 @@
+import { PropertyFilter, PropertyFilterMode } from './filters';
+
 export interface ToolbarEvents {
   onLevelToggle: (levels: Set<string>) => void;
   onSearch: (text: string) => void;
   onTemplateChange: (templateName: string) => void;
   onViewModeChange: (mode: 'table' | 'raw') => void;
+  onPropertyFilterModeChange: (mode: PropertyFilterMode) => void;
+  onRemovePropertyFilter: (index: number) => void;
+  onClearPropertyFilters: () => void;
 }
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -20,6 +25,10 @@ export class Toolbar {
   private searchInput!: HTMLInputElement;
   private templateSelect!: HTMLSelectElement;
   private viewToggle!: HTMLButtonElement;
+  private filterRow!: HTMLDivElement;
+  private filterModeToggle!: HTMLButtonElement;
+  private clearFiltersBtn!: HTMLButtonElement;
+  private filterPills!: HTMLDivElement;
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private events: ToolbarEvents;
   private activeLevels: Set<string> = new Set();
@@ -107,6 +116,38 @@ export class Toolbar {
     this.container.appendChild(this.searchInput);
     this.container.appendChild(this.templateSelect);
     this.container.appendChild(this.viewToggle);
+
+    this.filterRow = document.createElement('div');
+    this.filterRow.className = 'property-filter-row';
+
+    this.filterModeToggle = document.createElement('button');
+    this.filterModeToggle.type = 'button';
+    this.filterModeToggle.className = 'property-filter-mode';
+    this.filterModeToggle.textContent = 'Mode: AND';
+    this.filterModeToggle.addEventListener('click', () => {
+      const nextMode: PropertyFilterMode =
+        this.filterModeToggle.dataset.mode === 'and' ? 'or' : 'and';
+      this.events.onPropertyFilterModeChange(nextMode);
+    });
+    this.filterModeToggle.dataset.mode = 'and';
+
+    this.clearFiltersBtn = document.createElement('button');
+    this.clearFiltersBtn.type = 'button';
+    this.clearFiltersBtn.className = 'property-filter-clear';
+    this.clearFiltersBtn.textContent = 'Clear';
+    this.clearFiltersBtn.addEventListener('click', () => {
+      this.events.onClearPropertyFilters();
+    });
+
+    this.filterPills = document.createElement('div');
+    this.filterPills.className = 'property-filter-pills';
+
+    this.filterRow.appendChild(this.filterModeToggle);
+    this.filterRow.appendChild(this.clearFiltersBtn);
+    this.filterRow.appendChild(this.filterPills);
+    this.filterRow.style.display = 'none';
+    this.clearFiltersBtn.disabled = true;
+    this.container.appendChild(this.filterRow);
   }
 
   private handleLevelClick(level: string, shiftKey: boolean): void {
@@ -157,6 +198,35 @@ export class Toolbar {
   setActiveLevels(levels: Set<string>): void {
     this.activeLevels = new Set(levels);
     this.updateButtonStates();
+  }
+
+  setPropertyFilters(
+    filters: PropertyFilter[],
+    mode: PropertyFilterMode,
+  ): void {
+    this.filterModeToggle.dataset.mode = mode;
+    this.filterModeToggle.textContent = `Mode: ${mode.toUpperCase()}`;
+    this.filterPills.innerHTML = '';
+
+    if (filters.length === 0) {
+      this.filterRow.style.display = 'none';
+      return;
+    }
+
+    this.filterRow.style.display = '';
+    this.clearFiltersBtn.disabled = false;
+
+    filters.forEach((filter, index) => {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'property-filter-pill';
+      pill.title = `Remove filter ${filter.path}=${filter.value}`;
+      pill.textContent = `${filter.path}=${filter.value} ×`;
+      pill.addEventListener('click', () => {
+        this.events.onRemovePropertyFilter(index);
+      });
+      this.filterPills.appendChild(pill);
+    });
   }
 
   destroy(): void {

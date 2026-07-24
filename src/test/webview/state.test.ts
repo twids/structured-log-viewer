@@ -28,6 +28,8 @@ describe('ViewerState', () => {
     expect(data.activeLevels).toBeInstanceOf(Set);
     expect(data.activeLevels.size).toBe(0);
     expect(data.searchText).toBe('');
+    expect(data.propertyFilters).toEqual([]);
+    expect(data.propertyFilterMode).toBe('and');
   });
 
   it('setEntries updates entries, totalCount, page, and pageSize', () => {
@@ -141,6 +143,34 @@ describe('ViewerState', () => {
     state.setSearchText('');
 
     expect(state.get().searchText).toBe('');
+  });
+
+  it('addPropertyFilter adds unique filters', () => {
+    const state = new ViewerState();
+    state.addPropertyFilter({ path: 'userId', value: '42' });
+    state.addPropertyFilter({ path: 'userId', value: '42' });
+    expect(state.get().propertyFilters).toHaveLength(1);
+  });
+
+  it('removePropertyFilter removes by index', () => {
+    const state = new ViewerState();
+    state.addPropertyFilter({ path: 'userId', value: '42' });
+    state.addPropertyFilter({ path: 'env', value: 'prod' });
+    state.removePropertyFilter(0);
+    expect(state.get().propertyFilters).toEqual([{ path: 'env', value: 'prod' }]);
+  });
+
+  it('clearPropertyFilters removes all filters', () => {
+    const state = new ViewerState();
+    state.addPropertyFilter({ path: 'userId', value: '42' });
+    state.clearPropertyFilters();
+    expect(state.get().propertyFilters).toEqual([]);
+  });
+
+  it('setPropertyFilterMode updates mode', () => {
+    const state = new ViewerState();
+    state.setPropertyFilterMode('or');
+    expect(state.get().propertyFilterMode).toBe('or');
   });
 
   it('onChange listener is called when setEntries is invoked', () => {
