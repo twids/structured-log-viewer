@@ -9,7 +9,10 @@ A VS Code extension for viewing structured JSON log files in a filterable, searc
 - **Virtual scrolling** — Handles large log files smoothly with virtualized rendering
 - **Level filtering** — Toggle visibility of Verbose, Debug, Information, Warning, Error, and Fatal entries
 - **Text search** — Filter entries by searching across message text
+- **Resizable columns** — Drag header separators to resize Timestamp, Level, Message, and other columns
 - **Expandable rows** — Click a row to reveal full properties and exception stack traces
+- **Event details panel** — Expanded rows include summary fields, structured/nested properties, collapsible exception section, and raw JSON (collapsed by default)
+- **Clickable property filters** — Click a property value in the details panel to add fast exact-match filters with AND/OR mode
 - **Raw view toggle** — Switch between table view and raw JSON text
 - **Live-tail** — Automatically picks up new entries appended to the file
 - **Keyboard navigation** — Navigate rows with arrow keys, expand/collapse with Enter/Escape

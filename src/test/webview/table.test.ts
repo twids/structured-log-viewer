@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { VirtualTable } from '../../webview/table';
 import { getDefaultColumns } from '../../webview/columns';
 import { LogEntry } from '../../templates/types';
@@ -164,11 +164,11 @@ describe('VirtualTable', () => {
     expect(row?.classList.contains('expandable')).toBe(true);
   });
 
-  it('rows without exception or properties are not expandable', () => {
+  it('rows are expandable even without exception or properties', () => {
     const entries = [makeEntry(0, { properties: {}, exception: undefined })];
     table.setData(entries);
     const row = container.querySelector('.log-row');
-    expect(row?.classList.contains('expandable')).toBe(false);
+    expect(row?.classList.contains('expandable')).toBe(true);
   });
 
   it('toggleExpand adds expanded class to row', () => {
@@ -195,15 +195,35 @@ describe('VirtualTable', () => {
   });
 
   it('toggleExpand shows expansion panel with properties', () => {
-    const entries = [makeEntry(0, { properties: { userId: 99 } })];
+    const entries = [makeEntry(0, {
+      properties: { userId: 99, request: { method: 'GET' } },
+    })];
     table.setData(entries);
     table.toggleExpand(0);
 
     const panel = container.querySelector('.expansion-panel');
     expect(panel).not.toBeNull();
-    const detail = panel?.querySelector('.properties-detail');
-    expect(detail).not.toBeNull();
-    expect(detail?.textContent).toContain('userId');
+    const tree = panel?.querySelector('.properties-tree');
+    expect(tree).not.toBeNull();
+    expect(tree?.textContent).toContain('userId');
+    expect(tree?.textContent).toContain('99');
+    expect(tree?.textContent).toContain('request');
+    expect(tree?.querySelectorAll('.property-leaf').length).toBeGreaterThan(0);
+  });
+
+  it('clicking a property value emits property filter event', () => {
+    const onPropertyFilterAdd = vi.fn();
+    table.destroy();
+    table = new VirtualTable(container, undefined, { onPropertyFilterAdd });
+    const entries = [makeEntry(0, { properties: { userId: 99 } })];
+    table.setData(entries);
+    table.toggleExpand(0);
+
+    const valueBtn = container.querySelector<HTMLButtonElement>('.property-filter-action');
+    expect(valueBtn).not.toBeNull();
+    valueBtn!.click();
+
+    expect(onPropertyFilterAdd).toHaveBeenCalledWith({ path: 'userId', value: '99' });
   });
 
   it('toggleExpand shows expansion panel with exception', () => {
@@ -216,6 +236,31 @@ describe('VirtualTable', () => {
     expect(exText?.textContent).toContain('System.Exception: boom');
   });
 
+  it('toggleExpand shows summary fields and raw JSON section', () => {
+    const entries = [makeEntry(0, {
+      eventId: 'evt-123',
+      properties: { userId: 99 },
+      raw: { '@t': '2024-01-01T10:00:00.000Z', userId: 99 },
+    })];
+    table.setData(entries);
+    table.toggleExpand(0);
+
+    const panel = container.querySelector('.expansion-panel');
+    expect(panel?.textContent).toContain('Line');
+    expect(panel?.textContent).toContain('Timestamp');
+    expect(panel?.textContent).toContain('Level');
+    expect(panel?.textContent).toContain('Message');
+    expect(panel?.textContent).toContain('Event Id');
+    expect(panel?.textContent).toContain('Raw JSON');
+    const raw = panel?.querySelector('.raw-json-detail');
+    expect(raw).not.toBeNull();
+    expect(raw?.textContent).toContain('"userId": 99');
+    const rawSection = Array.from(
+      panel?.querySelectorAll('.event-section') ?? [],
+    ).find((section) => section.querySelector('summary')?.textContent === 'Raw JSON');
+    expect((rawSection as HTMLDetailsElement | undefined)?.open).toBe(false);
+  });
+
   it('header row is rendered with column labels', () => {
     const labels = container.querySelectorAll('.log-header-cell');
     expect(labels.length).toBe(5);
@@ -225,6 +270,26 @@ describe('VirtualTable', () => {
     expect(texts).toContain('Level');
     expect(texts).toContain('Message');
     expect(texts).toContain('Properties');
+  });
+
+  it('renders resize handles for header columns except the last one', () => {
+    const handles = container.querySelectorAll('.col-resize-handle');
+    expect(handles.length).toBe(4);
+  });
+
+  it('updates column widths when dragging a resize handle', () => {
+    const handle = container.querySelector('.col-resize-handle') as HTMLElement;
+    expect(handle).not.toBeNull();
+
+    const before = container.style.getPropertyValue('--log-columns');
+
+    handle.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mousemove', { clientX: 140, bubbles: true }));
+    window.dispatchEvent(new MouseEvent('mouseup', { clientX: 140, bubbles: true }));
+
+    const after = container.style.getPropertyValue('--log-columns');
+    expect(after).not.toBe(before);
+    expect(after).toContain('px');
   });
 
   it('destroy removes DOM elements created by the table', () => {

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Toolbar, ToolbarEvents } from '../../webview/toolbar';
+import { PropertyFilter } from '../../webview/filters';
 
 function makeContainer(): HTMLElement {
   const div = document.createElement('div');
@@ -14,6 +15,9 @@ function makeEvents(overrides: Partial<ToolbarEvents> = {}): ToolbarEvents {
     onSearch: vi.fn(),
     onTemplateChange: vi.fn(),
     onViewModeChange: vi.fn(),
+    onPropertyFilterModeChange: vi.fn(),
+    onRemovePropertyFilter: vi.fn(),
+    onClearPropertyFilters: vi.fn(),
     ...overrides,
   };
 }
@@ -214,6 +218,48 @@ describe('Toolbar', () => {
       btn.click(); // table → raw
       btn.click(); // raw → table
       expect(events.onViewModeChange).toHaveBeenNthCalledWith(2, 'table');
+    });
+  });
+
+  describe('property filters', () => {
+    it('renders filter pills when property filters are set', () => {
+      const filters: PropertyFilter[] = [
+        { path: 'userId', value: '42' },
+        { path: 'request.method', value: 'GET' },
+      ];
+      toolbar.setPropertyFilters(filters, 'and');
+
+      const pills = container.querySelectorAll('.property-filter-pill');
+      expect(pills).toHaveLength(2);
+      expect(container.querySelector('.property-filter-row')?.textContent).toContain('userId=42');
+    });
+
+    it('clear button triggers onClearPropertyFilters', () => {
+      toolbar.setPropertyFilters([{ path: 'userId', value: '42' }], 'and');
+      const clearBtn = container.querySelector<HTMLButtonElement>('.property-filter-clear')!;
+      clearBtn.click();
+      expect(events.onClearPropertyFilters).toHaveBeenCalledTimes(1);
+    });
+
+    it('clear button is disabled when filters are empty', () => {
+      toolbar.setPropertyFilters([{ path: 'userId', value: '42' }], 'and');
+      toolbar.setPropertyFilters([], 'and');
+      const clearBtn = container.querySelector<HTMLButtonElement>('.property-filter-clear')!;
+      expect(clearBtn.disabled).toBe(true);
+    });
+
+    it('clicking a pill triggers onRemovePropertyFilter with index', () => {
+      toolbar.setPropertyFilters([{ path: 'userId', value: '42' }], 'and');
+      const pill = container.querySelector<HTMLButtonElement>('.property-filter-pill')!;
+      pill.click();
+      expect(events.onRemovePropertyFilter).toHaveBeenCalledWith(0);
+    });
+
+    it('mode toggle triggers onPropertyFilterModeChange', () => {
+      toolbar.setPropertyFilters([{ path: 'userId', value: '42' }], 'and');
+      const modeBtn = container.querySelector<HTMLButtonElement>('.property-filter-mode')!;
+      modeBtn.click();
+      expect(events.onPropertyFilterModeChange).toHaveBeenCalledWith('or');
     });
   });
 });
