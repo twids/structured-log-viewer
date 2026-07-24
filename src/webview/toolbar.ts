@@ -210,6 +210,7 @@ export class Toolbar {
 
     if (filters.length === 0) {
       this.filterRow.style.display = 'none';
+      this.clearFiltersBtn.disabled = true;
       return;
     }
 

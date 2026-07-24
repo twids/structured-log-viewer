@@ -42,7 +42,7 @@ export class FilterEngine {
         const checks = propertyFilters.map((f) => {
           const candidate = getPropertyPathValue(e.properties, f.path);
           if (candidate === undefined) return false;
-          return String(candidate).toLowerCase() === f.value.toLowerCase();
+          return String(candidate) === f.value;
         });
         return propertyFilterMode === 'and'
           ? checks.every(Boolean)

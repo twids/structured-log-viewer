@@ -241,6 +241,13 @@ describe('Toolbar', () => {
       expect(events.onClearPropertyFilters).toHaveBeenCalledTimes(1);
     });
 
+    it('clear button is disabled when filters are empty', () => {
+      toolbar.setPropertyFilters([{ path: 'userId', value: '42' }], 'and');
+      toolbar.setPropertyFilters([], 'and');
+      const clearBtn = container.querySelector<HTMLButtonElement>('.property-filter-clear')!;
+      expect(clearBtn.disabled).toBe(true);
+    });
+
     it('clicking a pill triggers onRemovePropertyFilter with index', () => {
       toolbar.setPropertyFilters([{ path: 'userId', value: '42' }], 'and');
       const pill = container.querySelector<HTMLButtonElement>('.property-filter-pill')!;

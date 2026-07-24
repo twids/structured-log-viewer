@@ -152,6 +152,20 @@ describe('FilterEngine.apply', () => {
     expect(result[0].line).toBe(0);
   });
 
+  it('property filter is case-sensitive for exact matches', () => {
+    const withProps = [
+      makeEntry({ line: 0, properties: { request: { method: 'GET' } } }),
+    ];
+    const result = FilterEngine.apply(
+      withProps,
+      new Set(),
+      '',
+      [{ path: 'request.method', value: 'get' }],
+      'and',
+    );
+    expect(result).toHaveLength(0);
+  });
+
   it('property filters support OR mode', () => {
     const withProps = [
       makeEntry({ line: 0, properties: { userId: 42, env: 'prod' } }),
